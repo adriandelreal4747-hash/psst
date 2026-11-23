@@ -218,7 +218,24 @@ function timeAgo(iso){
   const hr = Math.floor(m/60); if (hr < 24) return `hace ${hr} h`;
   const d = Math.floor(hr/24); return d === 1 ? "ayer" : `hace ${d} días`;
 }
-function baseUrl(){ return location.origin + location.pathname; }
+const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const PUBLIC_URL = "https://adriandelreal4747-hash.github.io/psst/";
+const Native = (name) => (NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
+function vibrate(style){ try{ const hp = Native("Haptics"); if (hp) hp.impact({ style: style || "MEDIUM" }); }catch(e){} }
+async function shareLink(link){
+  const sh = Native("Share");
+  if (!sh) return false;
+  try{ await sh.share({ title: "Envíame un mensaje anónimo 🤫", text: "Envíame un mensaje anónimo 🤫", url: link, dialogTitle: "Compartir mi link" }); return true; }
+  catch(e){ return true; }
+}
+async function shareImage(dataUrl){
+  const fs = Native("Filesystem"), sh = Native("Share");
+  if (!fs || !sh) return false;
+  const file = await fs.writeFile({ path: "psst-respuesta.png", data: dataUrl.split(",")[1], directory: "CACHE" });
+  try{ await sh.share({ files: [file.uri], dialogTitle: "Compartir en tu historia" }); }catch(e){}
+  return true;
+}
+function baseUrl(){ return NATIVE ? PUBLIC_URL : location.origin + location.pathname; }
 function myLink(){ return baseUrl() + "?u=" + S.profile.username; }
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -310,11 +327,11 @@ const IS_STANDALONE = (window.matchMedia && matchMedia("(display-mode: standalon
 const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; refreshInstall(); });
 window.addEventListener("appinstalled", () => { installEvt = null; refreshInstall(); });
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+if ("serviceWorker" in navigator && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 function refreshInstall(){ const old = document.querySelector(".install-wrap"); if (old) old.replaceWith(installBar()); }
 function installBar(){
   const wrap = h("div",{class:"install-wrap"});
-  if (IS_STANDALONE || S.sendMode) return wrap;
+  if (IS_STANDALONE || NATIVE || S.sendMode) return wrap;
   if (!installEvt && !IS_IOS) return wrap;
   const btn = h("button",{}, "Instalar");
   const box = h("div",{class:"install"}, h("div",{class:"ico"},"🤫"),
@@ -383,6 +400,8 @@ async function loadMsgs(){
   if (error) return;
   const sig = JSON.stringify(data);
   if (sig === S.lastSig && S.msgsLoaded) return;
+  const hadNew = S.msgsLoaded && data.some(m => !(S.msgs || []).some(o => o.id === m.id));
+  if (hadNew) vibrate("HEAVY");
   S.lastSig = sig; S.msgs = data; S.msgsLoaded = true;
   if (!document.querySelector(".modal-bg")) renderHome();
 }
@@ -513,7 +532,10 @@ function linkCard(){
   const copyBtn = h("button",{class:"btn-dark btn-sm"}, "Copiar");
   copyBtn.addEventListener("click", () => copyText(link, copyBtn));
   const bigCopy = h("button",{class:"btn pulse"}, "📋 Copiar mi link");
+  if (NATIVE) bigCopy.textContent = "📤 Compartir mi link";
   bigCopy.addEventListener("click", async () => {
+    vibrate("LIGHT");
+    if (await shareLink(link)) { confetti(); return; }
     try{ await navigator.clipboard.writeText(link); bigCopy.textContent = "¡Copiado! Pégalo en tu historia 🎉"; confetti(); }
     catch(e){ bigCopy.textContent = "Cópialo de la caja de abajo"; }
     setTimeout(() => { bigCopy.textContent = "📋 Copiar mi link"; }, 2500);
@@ -570,7 +592,9 @@ function openMsg(m){
     copyBtn.addEventListener("click", () => copyText(myLink(), copyBtn));
     preview.replaceChildren(
       h("img",{class:"preview", src:url, alt:"Imagen para tu historia"}),
-      h("a",{class:"btn btn-dark", href:url, download:"psst-respuesta.png", style:"display:block;text-align:center;text-decoration:none"}, "Descargar imagen"),
+      NATIVE
+        ? h("button",{class:"btn btn-dark", onclick:()=>{ vibrate("LIGHT"); shareImage(url); }}, "📤 Compartir imagen")
+        : h("a",{class:"btn btn-dark", href:url, download:"psst-respuesta.png", style:"display:block;text-align:center;text-decoration:none"}, "Descargar imagen"),
       h("p",{class:"muted center", style:"margin-top:10px"}, "Súbela a tu historia y agrega tu link:"),
       h("div",{class:"linkbox"}, h("code",{}, myLink()), copyBtn));
   });
@@ -721,6 +745,7 @@ function sendForm(prof){
     const { error } = await S.sb.from("messages").insert({ recipient: prof.id, body: text, sender_device });
     if (error){ err.textContent = /filtro/i.test(error.message || "") ? "Tu mensaje parece ofensivo y no se enviará." : "No se pudo enviar. Intenta de nuevo en un momento."; btn.disabled = false; btn.textContent = "Enviar 🤫"; return; }
     list.push(Date.now()); lsSet("psst_sent", list);
+    vibrate("HEAVY");
     confetti();
     render(h("div",{class:"card center"},
       h("div",{class:"big-emoji"}, "🎉"), h("h1",{}, "¡Enviado!"),
