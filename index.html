@@ -117,6 +117,7 @@
   .tabs{display:flex;gap:8px;margin-bottom:14px}
   .tabs button{flex:1;background:rgba(255,255,255,.2);color:#fff}
   .tabs button.on{background:#fff;color:var(--p1)}
+  .tabs button:nth-child(3){flex:0 0 60px;padding-left:0;padding-right:0}
   .msg{display:flex;gap:12px;align-items:center;padding:14px;border-radius:20px;background:#faf8fd;margin-bottom:10px;cursor:pointer;border:2px solid transparent;width:100%;text-align:left;font-weight:500;color:var(--ink);animation:pop .45s cubic-bezier(.2,1.3,.4,1) both}
   .msg:hover{border-color:#e4dbf5;transform:translateY(-2px)}
   .msg.unread{background:linear-gradient(135deg,#faf5ff,#fdf2f8)}
@@ -152,6 +153,14 @@
   .install button{background:#fff;color:var(--p1);padding:10px 14px;font-size:14px;flex:none}
   .ios-steps{background:#fff;color:var(--ink);border-radius:16px;padding:12px 14px;margin-top:8px;font-size:14px;line-height:1.6}
   .ios-steps b{display:inline}
+  .foot a{color:#fff;font-weight:600}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:600}
+  .set-row:last-child{border-bottom:0}
+  .set-row span{color:var(--muted);font-weight:500;font-size:13px}
+  .danger{background:#fee2e2;color:#b91c1c}
+  .modq{background:#faf8fd;border-radius:16px;padding:12px 14px;margin-bottom:10px}
+  .modq p{margin:0 0 8px;font-weight:600;word-wrap:break-word}
+  .modq .row button{font-size:13px;padding:8px 10px}
   .warn{background:#fff7ed;color:#9a3412;border-radius:14px;padding:10px 14px;font-size:13px;margin-bottom:12px}
 
 </style>
@@ -194,7 +203,9 @@ function h(tag, attrs, ...kids){
 const app = document.getElementById("app");
 function render(...nodes){ app.replaceChildren(brand(), ...nodes, installBar(), footer()); }
 function brand(){ return h("div",{class:"brand"}, h("div",{class:"dot"},"🤫"), "psst", h("small",{}, "mensajes anónimos")); }
-function footer(){ return h("div",{class:"foot"}, "Solo para mayores de 18 años. Psst nunca revela quién envió un mensaje y nunca genera mensajes falsos."); }
+const CONTACT = "adriandelreal4747@gmail.com";
+function footer(){ return h("div",{class:"foot"}, "Solo para mayores de 18 años. Psst nunca revela quién envió un mensaje y nunca genera mensajes falsos.",
+  h("div",{style:"margin-top:6px"}, h("a",{href:"terminos.html"},"Términos"), " · ", h("a",{href:"privacidad.html"},"Privacidad"), " · ", h("a",{href:"mailto:" + CONTACT},"Contacto"))); }
 function norm(s){ return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
 function isOffensive(text){
   const t = " " + norm(text).replace(/[^a-z0-9ñ ]/g," ").replace(/\s+/g," ") + " ";
@@ -211,6 +222,12 @@ function baseUrl(){ return location.origin + location.pathname; }
 function myLink(){ return baseUrl() + "?u=" + S.profile.username; }
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+async function deviceHash(){
+  let id = lsGet("psst_device");
+  if (!id){ id = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()) + Date.now()); lsSet("psst_device", id); }
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("psst:" + id));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
 function rateList(){ const now = Date.now(); return (lsGet("psst_sent")||[]).filter(t => now - t < RATE_WINDOW); }
 async function copyText(text, btn){
   try{ await navigator.clipboard.writeText(text); btn.textContent = "¡Copiado!"; }
@@ -418,7 +435,7 @@ function authView(){
   if (!isLogin) kids.push(h("p",{class:"muted", style:"margin-top:8px"}, "Guarda bien tu contraseña: sin correo no se puede recuperar."));
   if (!isLogin) kids.push(
     h("label",{class:"check"}, age, h("span",{}, "Confirmo que tengo 18 años o más.")),
-    h("label",{class:"check"}, terms, h("span",{}, "Acepto las reglas: nada de acoso, amenazas ni contenido sexual."))
+    h("label",{class:"check"}, terms, h("span",{}, "Acepto los ", h("a",{href:"terminos.html", target:"_blank", style:"color:var(--p1)"}, "términos de uso"), ": tolerancia cero con el acoso, las amenazas y el contenido sexual."))
   );
   kids.push(btn, err,
     h("button",{class:"btn btn-ghost", onclick:()=>{ S.authMode = isLogin ? "signup" : "login"; render(authView()); }},
@@ -465,8 +482,9 @@ function renderHome(){
       h("button",{class:"logout", onclick:logout}, "Cerrar sesión")),
     h("div",{class:"tabs"},
       h("button",{class: S.tab==="inbox" ? "on" : "", onclick:()=>{S.tab="inbox"; renderHome();}}, "Bandeja", unread ? h("span",{class:"badge"}, unread) : null),
-      h("button",{class: S.tab==="link" ? "on" : "", onclick:()=>{S.tab="link"; renderHome();}}, "Mi link")),
-    S.tab === "inbox" ? inboxList() : linkCard()
+      h("button",{class: S.tab==="link" ? "on" : "", onclick:()=>{S.tab="link"; renderHome();}}, "Mi link"),
+      h("button",{class: S.tab==="settings" ? "on" : "", onclick:()=>{S.tab="settings"; renderHome();}}, "⚙️")),
+    S.tab === "inbox" ? inboxList() : S.tab === "link" ? linkCard() : settingsView()
   );
 }
 
@@ -537,6 +555,14 @@ function openMsg(m){
     if (error){ status.textContent = "No se pudo reportar."; return; }
     S.msgs = S.msgs.filter(x => x.id !== m.id); close();
   });
+  let blockArmed = false;
+  const blockBtn = h("button",{class:"btn-ghost btn-sm"}, "Bloquear");
+  blockBtn.addEventListener("click", async () => {
+    if (!blockArmed){ blockArmed = true; blockBtn.textContent = "¿Bloquear? Toca otra vez"; status.textContent = "Esa persona ya no podrá escribirte y se borrarán sus mensajes."; return; }
+    const { error } = await S.sb.rpc("block_sender", { msg: m.id });
+    if (error){ status.textContent = "No se pudo bloquear."; return; }
+    bg.remove(); S.lastSig = null; await loadMsgs(); renderHome();
+  });
   const makeBtn = h("button",{class:"btn"}, "Crear imagen para historia");
   makeBtn.addEventListener("click", () => {
     const url = makeStoryImage(m.body, replyBox.value.trim(), S.profile.username);
@@ -552,9 +578,67 @@ function openMsg(m){
     h("div",{class:"modal"},
       h("div",{class:"bubble"}, h("small",{}, "Mensaje anónimo · " + timeAgo(m.created_at)), m.body),
       h("label",{}, "Tu respuesta"), replyBox, makeBtn, preview,
-      h("div",{class:"row", style:"margin-top:14px"}, reportBtn, delBtn, h("button",{class:"btn-ghost btn-sm", onclick:close}, "Cerrar")),
+      h("div",{class:"row", style:"margin-top:14px"}, reportBtn, blockBtn, delBtn),
+      h("button",{class:"btn btn-ghost btn-sm", onclick:close}, "Cerrar"),
       status));
   document.body.append(bg);
+}
+
+// ===== Ajustes =====
+function settingsView(){
+  const wrap = h("div",{});
+  const card = h("div",{class:"card"}, h("h2",{}, "Ajustes"),
+    h("div",{class:"set-row"}, "Usuario", h("span",{}, "@" + S.profile.username)),
+    h("a",{class:"set-row", href:"terminos.html"}, "Términos de uso", h("span",{}, "›")),
+    h("a",{class:"set-row", href:"privacidad.html"}, "Aviso de privacidad", h("span",{}, "›")),
+    h("a",{class:"set-row", href:"mailto:" + CONTACT}, "Contacto y reportes", h("span",{}, CONTACT)),
+    h("button",{class:"btn btn-ghost", onclick:logout}, "Cerrar sesión"));
+  wrap.append(card, deleteAccountCard());
+  const modSlot = h("div",{});
+  wrap.append(modSlot);
+  S.sb.from("admins").select("user_id").eq("user_id", S.session.user.id).maybeSingle().then(({ data }) => {
+    if (data) modSlot.replaceWith(moderationCard());
+  });
+  return wrap;
+}
+
+function deleteAccountCard(){
+  const input = h("input",{type:"text", placeholder:S.profile.username, autocomplete:"off", autocapitalize:"none"});
+  const err = h("div",{class:"err"});
+  const btn = h("button",{class:"btn danger"}, "Borrar mi cuenta para siempre");
+  btn.addEventListener("click", async () => {
+    if (input.value.trim().toLowerCase() !== S.profile.username){ err.textContent = "Escribe tu usuario exactamente para confirmar."; return; }
+    btn.disabled = true; btn.textContent = "Borrando…";
+    const { error } = await S.sb.rpc("delete_my_account");
+    if (error){ err.textContent = "No se pudo borrar la cuenta. Intenta de nuevo."; btn.disabled = false; btn.textContent = "Borrar mi cuenta para siempre"; return; }
+    await S.sb.auth.signOut().catch(() => {});
+    S.session = null; S.authMode = "signup";
+    render(messageView("Cuenta borrada", "Tu cuenta, tu link y todos tus mensajes se eliminaron."), authView());
+  });
+  return h("div",{class:"card"}, h("h2",{}, "Borrar cuenta"),
+    h("p",{class:"muted"}, "Se eliminan tu usuario, tu link y todos tus mensajes. No se puede deshacer."),
+    h("label",{}, "Escribe tu usuario para confirmar"), input, btn, err);
+}
+
+function moderationCard(){
+  const card = h("div",{class:"card"}, h("h2",{}, "🛡️ Moderación"),
+    h("p",{class:"muted"}, "Mensajes reportados por los usuarios. Revísalos al menos una vez al día."));
+  const list = h("div",{}, h("div",{class:"spinner"}));
+  card.append(list);
+  const load = async () => {
+    const { data, error } = await S.sb.from("messages").select("id, body, created_at").eq("reported", true).order("created_at",{ascending:false}).limit(100);
+    if (error){ list.replaceChildren(h("p",{class:"err"}, "No se pudieron cargar los reportes.")); return; }
+    if (!data.length){ list.replaceChildren(h("p",{class:"muted"}, "✅ No hay reportes pendientes.")); return; }
+    list.replaceChildren(...data.map(m => {
+      const del = h("button",{class:"btn-ghost"}, "Eliminar mensaje");
+      const ban = h("button",{class:"danger"}, "Expulsar remitente");
+      del.addEventListener("click", async () => { await S.sb.from("messages").delete().eq("id", m.id); load(); });
+      ban.addEventListener("click", async () => { await S.sb.rpc("ban_sender", { msg: m.id }); load(); });
+      return h("div",{class:"modq"}, h("p",{}, m.body), h("small",{class:"muted"}, timeAgo(m.created_at)), h("div",{class:"row", style:"margin-top:8px"}, del, ban));
+    }));
+  };
+  load();
+  return card;
 }
 
 // ===== Imagen para historias =====
@@ -633,8 +717,9 @@ function sendForm(prof){
     if (list.length >= RATE_MAX){ err.textContent = "Enviaste muchos mensajes seguidos. Espera unos minutos."; return; }
     btn.disabled = true; btn.textContent = "Enviando…";
     // No se guarda nada que identifique a quien envía
-    const { error } = await S.sb.from("messages").insert({ recipient: prof.id, body: text });
-    if (error){ err.textContent = "No se pudo enviar. Intenta de nuevo en un momento."; btn.disabled = false; btn.textContent = "Enviar 🤫"; return; }
+    const sender_device = await deviceHash();
+    const { error } = await S.sb.from("messages").insert({ recipient: prof.id, body: text, sender_device });
+    if (error){ err.textContent = /filtro/i.test(error.message || "") ? "Tu mensaje parece ofensivo y no se enviará." : "No se pudo enviar. Intenta de nuevo en un momento."; btn.disabled = false; btn.textContent = "Enviar 🤫"; return; }
     list.push(Date.now()); lsSet("psst_sent", list);
     confetti();
     render(h("div",{class:"card center"},
