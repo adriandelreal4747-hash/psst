@@ -153,14 +153,17 @@ async function copyText(text, btn){
 }
 function loadingView(text){ return h("div",{class:"card center"}, h("div",{class:"spinner"}), h("p",{class:"muted"}, text)); }
 function messageView(title, text){ return h("div",{class:"card center"}, h("h1",{}, title), h("p",{class:"muted"}, text)); }
+// Supabase pide un correo: lo armamos a partir del usuario (el usuario nunca lo ve)
+const EMAIL_DOMAIN = "psst.app";
+function loginEmail(u){ return u.includes("@") ? u : u + "@" + EMAIL_DOMAIN; }
 function authErrorText(e){
   const m = (e && e.message || "").toLowerCase();
-  if (m.includes("invalid login")) return "Correo o contraseña incorrectos.";
-  if (m.includes("already registered")) return "Ese correo ya tiene cuenta. Inicia sesión.";
+  if (m.includes("invalid login")) return "Usuario o contraseña incorrectos.";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Ese usuario ya existe. Prueba otro o inicia sesión.";
   if (m.includes("password")) return "La contraseña debe tener al menos 6 caracteres.";
   if (m.includes("email not confirmed")) return "Confirma tu correo: te enviamos un enlace.";
   if (m.includes("rate limit")) return "Demasiados intentos. Espera unos minutos.";
-  if (m.includes("email")) return "Revisa que el correo esté bien escrito.";
+  if (m.includes("email")) return "Revisa que el usuario esté bien escrito.";
   return "Algo salió mal. Intenta de nuevo.";
 }
 
@@ -223,9 +226,8 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && S.
 // ===== Iniciar sesión / crear cuenta =====
 function authView(){
   const isLogin = S.authMode === "login";
-  const user = h("input",{type:"text", maxlength:"20", placeholder:"tu_usuario", autocomplete:"off"});
-  user.addEventListener("input", () => { user.value = user.value.toLowerCase().replace(/[^a-z0-9-]/g,""); });
-  const email = h("input",{type:"text", inputmode:"email", placeholder:"tu@correo.com", autocomplete:"email"});
+  const user = h("input",{type:"text", maxlength: isLogin ? "80" : "20", placeholder:"tu_usuario", autocomplete:"username", autocapitalize:"none"});
+  if (!isLogin) user.addEventListener("input", () => { user.value = user.value.toLowerCase().replace(/[^a-z0-9-]/g,""); });
   const pass = h("input",{type:"password", placeholder:"Mínimo 6 caracteres", autocomplete: isLogin ? "current-password" : "new-password"});
   const age = h("input",{type:"checkbox"});
   const terms = h("input",{type:"checkbox"});
@@ -234,39 +236,38 @@ function authView(){
 
   btn.addEventListener("click", async () => {
     err.textContent = "";
-    const em = email.value.trim(), pw = pass.value;
-    if (!em || !pw){ err.textContent = "Escribe tu correo y contraseña."; return; }
+    const name = user.value.trim().toLowerCase(), pw = pass.value;
+    if (!name || !pw){ err.textContent = "Escribe tu usuario y contraseña."; return; }
     btn.disabled = true;
     if (isLogin){
       btn.textContent = "Entrando…";
-      const { error } = await S.sb.auth.signInWithPassword({ email: em, password: pw });
+      const { error } = await S.sb.auth.signInWithPassword({ email: loginEmail(name), password: pw });
       if (error){ err.textContent = authErrorText(error); btn.disabled = false; btn.textContent = "Iniciar sesión"; }
       return;
     }
-    const name = user.value.trim();
     const fail = (t) => { err.textContent = t; btn.disabled = false; btn.textContent = "Crear mi cuenta"; };
     if (!/^[a-z0-9-]{3,20}$/.test(name)) return fail("Usuario: de 3 a 20 letras, números o guiones.");
+    if (pw.length < 6) return fail("La contraseña debe tener al menos 6 caracteres.");
     if (!age.checked) return fail("Debes tener 18 años o más para usar Psst.");
     if (!terms.checked) return fail("Acepta las reglas de la comunidad para continuar.");
     btn.textContent = "Creando…";
     const taken = await S.sb.from("profiles").select("id").eq("username", name).maybeSingle();
     if (taken.data) return fail("Ese usuario ya está ocupado, prueba otro.");
     const { data, error } = await S.sb.auth.signUp({
-      email: em, password: pw,
+      email: loginEmail(name), password: pw,
       options: { data: { username: name }, emailRedirectTo: baseUrl() }
     });
     if (error) return fail(authErrorText(error));
-    if (!data.session){
-      render(messageView("Revisa tu correo 📬", "Te enviamos un enlace a " + em + " para activar tu cuenta. Después vuelve aquí e inicia sesión."));
-    }
+    if (!data.session) fail("No se pudo crear la cuenta. Intenta de nuevo.");
   });
 
   const kids = [
     h("h1",{}, isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"),
     h("p",{class:"muted"}, isLogin ? "Entra para ver tus mensajes anónimos." : "Crea tu link, compártelo en tus historias y recibe mensajes anónimos."),
   ];
-  if (!isLogin) kids.push(h("label",{}, "Usuario"), h("div",{class:"prefix"}, h("span",{}, "psst/"), user));
-  kids.push(h("label",{}, "Correo"), email, h("label",{}, "Contraseña"), pass);
+  kids.push(h("label",{}, "Usuario"), h("div",{class:"prefix"}, h("span",{}, "@"), user));
+  kids.push(h("label",{}, "Contraseña"), pass);
+  if (!isLogin) kids.push(h("p",{class:"muted", style:"margin-top:8px"}, "Guarda bien tu contraseña: sin correo no se puede recuperar."));
   if (!isLogin) kids.push(
     h("label",{class:"check"}, age, h("span",{}, "Confirmo que tengo 18 años o más.")),
     h("label",{class:"check"}, terms, h("span",{}, "Acepto las reglas: nada de acoso, amenazas ni contenido sexual."))
