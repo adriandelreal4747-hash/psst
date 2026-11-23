@@ -6,6 +6,12 @@
 <title>Psst — mensajes anónimos</title>
 <meta name="description" content="Recibe mensajes anónimos de tus amigos.">
 <meta name="theme-color" content="#7c3aed">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Psst">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤫</text></svg>">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="psst">
@@ -139,6 +145,13 @@
   .topbar b{font-weight:700}
   .logout{background:rgba(255,255,255,.2);color:#fff;padding:8px 14px;font-size:14px}
   .logout:hover{background:rgba(255,255,255,.3)}
+  .install{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border-radius:20px;padding:12px 14px;margin-top:14px;animation:pop .5s both}
+  .install .ico{width:44px;height:44px;border-radius:12px;background:#fff;display:grid;place-items:center;font-size:24px;flex:none}
+  .install div{flex:1;font-size:13px;line-height:1.35}
+  .install b{display:block;font-size:15px}
+  .install button{background:#fff;color:var(--p1);padding:10px 14px;font-size:14px;flex:none}
+  .ios-steps{background:#fff;color:var(--ink);border-radius:16px;padding:12px 14px;margin-top:8px;font-size:14px;line-height:1.6}
+  .ios-steps b{display:inline}
   .warn{background:#fff7ed;color:#9a3412;border-radius:14px;padding:10px 14px;font-size:13px;margin-bottom:12px}
 
 </style>
@@ -179,7 +192,7 @@ function h(tag, attrs, ...kids){
   return el;
 }
 const app = document.getElementById("app");
-function render(...nodes){ app.replaceChildren(brand(), ...nodes, footer()); }
+function render(...nodes){ app.replaceChildren(brand(), ...nodes, installBar(), footer()); }
 function brand(){ return h("div",{class:"brand"}, h("div",{class:"dot"},"🤫"), "psst", h("small",{}, "mensajes anónimos")); }
 function footer(){ return h("div",{class:"foot"}, "Solo para mayores de 18 años. Psst nunca revela quién envió un mensaje y nunca genera mensajes falsos."); }
 function norm(s){ return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
@@ -272,6 +285,33 @@ function heroDemo(){
   ];
   return h("div",{class:"demo","aria-hidden":"true"}, bubbles.map(([t,l,top,r,d]) =>
     h("div",{class:"b", style:`left:${l};top:${top};--r:${r};animation-delay:${d}`}, h("small",{},"ejemplo"), t)));
+}
+
+// ===== Instalar como app =====
+let installEvt = null;
+const IS_STANDALONE = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+const IS_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; refreshInstall(); });
+window.addEventListener("appinstalled", () => { installEvt = null; refreshInstall(); });
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+function refreshInstall(){ const old = document.querySelector(".install-wrap"); if (old) old.replaceWith(installBar()); }
+function installBar(){
+  const wrap = h("div",{class:"install-wrap"});
+  if (IS_STANDALONE || S.sendMode) return wrap;
+  if (!installEvt && !IS_IOS) return wrap;
+  const btn = h("button",{}, "Instalar");
+  const box = h("div",{class:"install"}, h("div",{class:"ico"},"🤫"),
+    h("div",{}, h("b",{}, "Instala Psst en tu celular"), "Ábrela desde tu pantalla de inicio, como cualquier app."), btn);
+  const steps = h("div",{});
+  btn.addEventListener("click", async () => {
+    if (installEvt){ installEvt.prompt(); await installEvt.userChoice.catch(() => null); installEvt = null; refreshInstall(); return; }
+    steps.replaceChildren(h("div",{class:"ios-steps"},
+      h("div",{}, "1. Toca el botón ", h("b",{}, "Compartir"), " de Safari (el cuadro con la flecha ⬆️)."),
+      h("div",{}, "2. Elige ", h("b",{}, "“Agregar a inicio”"), "."),
+      h("div",{}, "3. Toca ", h("b",{}, "Agregar"), ". ¡Listo! 🎉")));
+  });
+  wrap.append(box, steps);
+  return wrap;
 }
 
 // ===== Arranque =====
@@ -562,6 +602,7 @@ function makeStoryImage(question, answer, username){
 
 // ===== Página pública para enviar =====
 async function showSend(username){
+  S.sendMode = true;
   render(loadingView("Buscando a @" + username + "…"));
   const { data: prof, error } = await S.sb.from("profiles").select("id, username").eq("username", username).maybeSingle();
   if (error) return render(messageView("Sin conexión", "No pudimos cargar esta página. Intenta de nuevo."));
