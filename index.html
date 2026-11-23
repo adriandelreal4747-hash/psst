@@ -16,14 +16,35 @@
   html,body{margin:0;min-height:100%}
   body{
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:linear-gradient(160deg,var(--p1),var(--p2));
-    color:var(--ink); min-height:100vh;
+    background:linear-gradient(-45deg,#6d28d9,#db2777,#f97316,#7c3aed);
+    background-size:400% 400%; animation:bgmove 16s ease infinite;
+    color:var(--ink); min-height:100vh; overflow-x:hidden;
   }
+  @keyframes bgmove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.5;z-index:0;pointer-events:none;animation:drift 20s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(60px,-80px) scale(1.25)}}
+  .floaty{position:fixed;bottom:-60px;z-index:0;pointer-events:none;animation:rise linear forwards}
+  @keyframes rise{from{transform:translateY(0) rotate(0)}to{transform:translateY(-120vh) rotate(40deg);opacity:0}}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+  #app{position:relative;z-index:1}
+  @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-10px) rotate(var(--r,0deg))}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+  @keyframes wiggle{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(-14deg)}20%{transform:rotate(14deg)}30%{transform:rotate(-8deg)}40%{transform:rotate(8deg)}}
+  @keyframes roll{from{transform:rotate(0) scale(1)}50%{transform:rotate(200deg) scale(1.3)}to{transform:rotate(360deg) scale(1)}}
+  @keyframes bounceIn{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
   #app{max-width:460px;margin:0 auto;padding:28px 18px 60px}
   .brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:26px;letter-spacing:-.5px;margin-bottom:22px}
-  .brand .dot{width:34px;height:34px;border-radius:12px;background:#fff;color:var(--p1);display:grid;place-items:center;font-size:18px}
+  .brand .dot{animation:wiggle 4s ease-in-out infinite;width:34px;height:34px;border-radius:12px;background:#fff;color:var(--p1);display:grid;place-items:center;font-size:18px}
   .brand small{font-weight:500;font-size:13px;opacity:.85;margin-left:auto}
-  .card{background:var(--card);border-radius:24px;padding:22px;box-shadow:0 18px 40px rgba(40,10,70,.25);margin-bottom:16px}
+  .card{background:var(--card);border-radius:28px;padding:22px;box-shadow:0 20px 50px rgba(40,10,70,.3);margin-bottom:16px;animation:pop .5s cubic-bezier(.2,1.3,.4,1) both}
+  .hero{text-align:center;color:#fff;margin:6px 0 18px;animation:pop .5s both}
+  .hero h1{font-size:34px;line-height:1.08;letter-spacing:-1px;margin:0 0 10px;text-shadow:0 4px 20px rgba(0,0,0,.15)}
+  .hero p{opacity:.92;font-size:15px;margin:0}
+  .demo{position:relative;height:150px;margin:4px 0 14px}
+  .demo .b{position:absolute;background:#fff;color:var(--ink);border-radius:20px;padding:11px 15px;font-weight:700;font-size:14px;box-shadow:0 12px 30px rgba(40,10,70,.25);animation:bob 4s ease-in-out infinite;white-space:nowrap}
+  .demo .b small{display:block;font-size:10px;color:var(--p2);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
   h1{font-size:24px;margin:0 0 6px;letter-spacing:-.4px}
   h2{font-size:18px;margin:0 0 12px}
   p{margin:0 0 12px;line-height:1.5}
@@ -39,8 +60,25 @@
   .prefix input{border:0!important;background:transparent!important;padding-left:2px}
   .check{display:flex;gap:10px;align-items:flex-start;font-weight:500;font-size:14px;margin:12px 0}
   .check input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--p1)}
-  button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:14px 20px;font-weight:700;font-size:16px}
-  .btn{width:100%;background:linear-gradient(90deg,var(--p1),var(--p2));color:#fff;margin-top:14px}
+  button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:14px 20px;font-weight:700;font-size:16px;transition:transform .12s ease,box-shadow .2s,filter .2s}
+  button:active,a.btn:active{transform:scale(.94)!important}
+  .btn{width:100%;background:linear-gradient(90deg,var(--p1),var(--p2));color:#fff;margin-top:14px;box-shadow:0 10px 24px rgba(219,39,119,.35)}
+  .btn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-2px)}
+  .pulse:not(:disabled){animation:pulse 1.8s ease-in-out infinite}
+  .send-area{position:relative}
+  .send-area textarea{font-size:20px;font-weight:600;min-height:150px;padding:16px 16px 56px;border-radius:20px;background:#fff;border-color:#efe7fb}
+  .dice{position:absolute;right:10px;bottom:10px;width:46px;height:46px;padding:0;border-radius:50%;background:linear-gradient(135deg,#fde68a,#fb923c);font-size:22px;box-shadow:0 6px 16px rgba(251,146,60,.45)}
+  .dice.roll{animation:roll .55s ease}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 4px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;background:#f5f0ff;color:var(--p1);padding:8px 14px;font-size:13px;border-radius:999px;font-weight:600}
+  .chip:hover{background:#ede4ff}
+  .big-emoji{font-size:72px;animation:bounceIn .6s cubic-bezier(.2,1.5,.4,1) both;display:inline-block}
+  .stat{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#faf5ff,#fdf2f8);border-radius:20px;padding:14px 16px;margin-bottom:14px}
+  .stat b{font-size:28px;background:linear-gradient(90deg,var(--p1),var(--p2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .story-mini{background:linear-gradient(160deg,var(--p1),var(--p2));border-radius:22px;padding:26px 18px;text-align:center;color:#fff;margin-bottom:14px}
+  .story-mini .q{background:#fff;color:var(--ink);border-radius:18px;padding:14px;font-weight:700;margin:0 auto 10px;max-width:260px;box-shadow:0 10px 24px rgba(0,0,0,.2);animation:bob 4s ease-in-out infinite}
+  .story-mini .q small{display:block;color:var(--p2);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
   a.btn{display:block;box-sizing:border-box;padding:14px 20px;border-radius:999px;font-weight:700;font-size:16px;text-align:center;text-decoration:none}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-ghost{background:#f3effa;color:var(--p1)}
@@ -60,8 +98,10 @@
   .tabs{display:flex;gap:8px;margin-bottom:14px}
   .tabs button{flex:1;background:rgba(255,255,255,.2);color:#fff}
   .tabs button.on{background:#fff;color:var(--p1)}
-  .msg{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:#faf8fd;margin-bottom:10px;cursor:pointer;border:2px solid transparent;width:100%;text-align:left;font-weight:500;color:var(--ink)}
-  .msg:hover{border-color:#e4dbf5}
+  .msg{display:flex;gap:12px;align-items:center;padding:14px;border-radius:20px;background:#faf8fd;margin-bottom:10px;cursor:pointer;border:2px solid transparent;width:100%;text-align:left;font-weight:500;color:var(--ink);animation:pop .45s cubic-bezier(.2,1.3,.4,1) both}
+  .msg:hover{border-color:#e4dbf5;transform:translateY(-2px)}
+  .msg.unread{background:linear-gradient(135deg,#faf5ff,#fdf2f8)}
+  .msg.unread .ic{animation:wiggle 2.4s ease-in-out infinite}
   .msg .ic{width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:20px;background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff}
   .msg.read .ic{background:#e7e2f0;color:#8b80a0}
   .msg .t{flex:1;min-width:0}
@@ -71,8 +111,8 @@
   .empty{text-align:center;padding:26px 10px;color:var(--muted)}
   .empty .big{font-size:44px;margin-bottom:6px}
   .modal-bg{position:fixed;inset:0;background:rgba(20,8,35,.55);display:flex;align-items:flex-end;justify-content:center;z-index:10;padding:12px}
-  .modal{background:#fff;border-radius:26px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:22px}
-  .bubble{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;border-radius:20px;padding:20px;font-size:18px;font-weight:600;line-height:1.4;word-wrap:break-word;margin-bottom:14px}
+  .modal{animation:pop .4s cubic-bezier(.2,1.3,.4,1) both;background:#fff;border-radius:26px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:22px}
+  .bubble{animation:bounceIn .5s cubic-bezier(.2,1.4,.4,1) both;background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;border-radius:20px;padding:20px;font-size:18px;font-weight:600;line-height:1.4;word-wrap:break-word;margin-bottom:14px}
   .bubble small{display:block;font-size:12px;font-weight:500;opacity:.85;margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
   .preview{width:100%;border-radius:18px;display:block;margin:12px 0;box-shadow:0 8px 20px rgba(0,0,0,.15)}
   .badge{display:inline-block;background:#fff;color:var(--p1);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700;margin-left:6px}
@@ -167,6 +207,60 @@ function authErrorText(e){
   return "Algo salió mal. Intenta de nuevo.";
 }
 
+// ===== Efectos visuales =====
+const PROMPTS = [
+  "¿Qué es lo primero que pensaste de mí? 👀","Confiesa algo que nunca me has dicho 🤐","¿Con quién me shippeas? 💘",
+  "Dime una canción que te recuerde a mí 🎵","¿Cuál es mi mejor cualidad? ✨","¿Qué harías si fueras yo por un día?",
+  "Califica mi feed del 1 al 10 📸","¿Qué consejo me darías? 💭","¿Cuál es tu recuerdo favorito conmigo?",
+  "Si fuera un emoji, ¿cuál sería? 😜","¿Qué opinas de mi estilo? 👟","Cuéntame un chisme ☕"
+];
+const CHIPS = ["Confiesa algo 🤫","¿Qué piensas de mí? 👀","Tengo un crush 💘","Dime un secreto 🔐","Un consejo 💭"];
+const REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+function decorate(){
+  [["#f0abfc","-80px","-60px","320px"],["#fdba74","auto","-100px","360px"],["#a5b4fc","40%","70%","260px"]].forEach(([c,t,l,sz],i)=>{
+    const b = document.createElement("div"); b.className = "blob";
+    Object.assign(b.style,{background:c,width:sz,height:sz,top:t,left:l,bottom: t==="auto" ? "-120px" : "", animationDelay:(i*-6)+"s"});
+    document.body.prepend(b);
+  });
+  if (REDUCED) return;
+  const EM = ["💌","🤫","✨","💜","🔥","👀","💬","🫶","⭐"];
+  setInterval(() => {
+    if (document.hidden) return;
+    const e = document.createElement("div"); e.className = "floaty";
+    e.textContent = EM[Math.floor(Math.random()*EM.length)];
+    const dur = 9 + Math.random()*7;
+    Object.assign(e.style,{left:(Math.random()*100)+"vw", fontSize:(18+Math.random()*22)+"px", opacity:(.35+Math.random()*.4), animationDuration:dur+"s"});
+    document.body.append(e); setTimeout(() => e.remove(), dur*1000);
+  }, 1400);
+}
+function confetti(){
+  if (REDUCED) return;
+  const c = document.createElement("canvas"); c.id = "confetti";
+  c.width = innerWidth; c.height = innerHeight; document.body.append(c);
+  const x = c.getContext("2d");
+  const colors = ["#7c3aed","#ec4899","#f97316","#facc15","#22d3ee","#ffffff"];
+  const ps = Array.from({length:140}, () => ({
+    x: c.width/2, y: c.height*0.55, vx:(Math.random()-.5)*16, vy:-Math.random()*16-6,
+    s: 6+Math.random()*7, r: Math.random()*6, vr:(Math.random()-.5)*.3, col: colors[Math.floor(Math.random()*colors.length)]
+  }));
+  let t = 0;
+  (function frame(){
+    x.clearRect(0,0,c.width,c.height);
+    for (const p of ps){ p.vy += .45; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      x.save(); x.translate(p.x,p.y); x.rotate(p.r); x.fillStyle = p.col; x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); x.restore(); }
+    if (++t < 130) requestAnimationFrame(frame); else c.remove();
+  })();
+}
+function heroDemo(){
+  const bubbles = [
+    ["¿Qué piensas de mí? 👀","8%","8px","-4deg","0s"],
+    ["Me caes muy bien 💜","52%","48px","5deg","-1.3s"],
+    ["¿Tienes crush? 💘","14%","96px","3deg","-2.6s"]
+  ];
+  return h("div",{class:"demo","aria-hidden":"true"}, bubbles.map(([t,l,top,r,d]) =>
+    h("div",{class:"b", style:`left:${l};top:${top};--r:${r};animation-delay:${d}`}, h("small",{},"ejemplo"), t)));
+}
+
 // ===== Arranque =====
 async function init(){
   if (SUPABASE_KEY.startsWith("PEGA_") || SUPABASE_URL.startsWith("PEGA_")){
@@ -174,6 +268,7 @@ async function init(){
     return;
   }
   S.sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  decorate();
   const u = new URLSearchParams(location.search).get("u");
   if (u) return showSend(u.toLowerCase());
   render(loadingView("Cargando…"));
@@ -232,7 +327,7 @@ function authView(){
   const age = h("input",{type:"checkbox"});
   const terms = h("input",{type:"checkbox"});
   const err = h("div",{class:"err"});
-  const btn = h("button",{class:"btn"}, isLogin ? "Iniciar sesión" : "Crear mi cuenta");
+  const btn = h("button",{class:"btn" + (isLogin ? "" : " pulse")}, isLogin ? "Iniciar sesión" : "Crear mi link ✨");
 
   btn.addEventListener("click", async () => {
     err.textContent = "";
@@ -245,7 +340,7 @@ function authView(){
       if (error){ err.textContent = authErrorText(error); btn.disabled = false; btn.textContent = "Iniciar sesión"; }
       return;
     }
-    const fail = (t) => { err.textContent = t; btn.disabled = false; btn.textContent = "Crear mi cuenta"; };
+    const fail = (t) => { err.textContent = t; btn.disabled = false; btn.textContent = "Crear mi link ✨"; };
     if (!/^[a-z0-9-]{3,20}$/.test(name)) return fail("Usuario: de 3 a 20 letras, números o guiones.");
     if (pw.length < 6) return fail("La contraseña debe tener al menos 6 caracteres.");
     if (!age.checked) return fail("Debes tener 18 años o más para usar Psst.");
@@ -275,7 +370,12 @@ function authView(){
   kids.push(btn, err,
     h("button",{class:"btn btn-ghost", onclick:()=>{ S.authMode = isLogin ? "signup" : "login"; render(authView()); }},
       isLogin ? "➕ Crear una cuenta nueva" : "Ya tengo cuenta, iniciar sesión"));
-  return h("div",{class:"card"}, ...kids);
+  if (isLogin) return h("div",{class:"card"}, ...kids);
+  return h("div",{},
+    h("div",{class:"hero"}, h("h1",{}, "Recibe mensajes anónimos de tus amigos 🤫"),
+      h("p",{}, "Crea tu link en 10 segundos y compártelo en tu historia.")),
+    heroDemo(),
+    h("div",{class:"card"}, ...kids));
 }
 
 function pickUsernameView(){
@@ -321,15 +421,19 @@ function inboxList(){
   const card = h("div",{class:"card"}, h("h2",{}, "Tus mensajes"));
   if (!S.msgsLoaded){ card.append(h("div",{class:"spinner"})); return card; }
   if (!S.msgs.length){
-    card.append(h("div",{class:"empty"}, h("div",{class:"big"}, "📭"), h("p",{}, "Todavía no tienes mensajes."),
+    card.append(h("div",{class:"empty"}, h("div",{class:"big-emoji"}, "📭"), h("p",{}, "Todavía no tienes mensajes. ¡Comparte tu link para empezar!"),
       h("button",{class:"btn btn-sm", onclick:()=>{S.tab="link"; renderHome();}}, "Comparte tu link")));
     return card;
   }
-  for (const m of S.msgs){
-    card.append(h("button",{class:"msg " + (m.is_read ? "read" : "unread"), onclick:()=>openMsg(m)},
+  const unread = S.msgs.filter(m => !m.is_read).length;
+  card.append(h("div",{class:"stat"}, h("b",{}, String(unread)),
+    h("div",{}, h("div",{style:"font-weight:700"}, unread === 1 ? "mensaje nuevo 💌" : "mensajes nuevos 💌"),
+      h("small",{class:"muted"}, S.msgs.length + " en total"))));
+  S.msgs.forEach((m, i) => {
+    card.append(h("button",{class:"msg " + (m.is_read ? "read" : "unread"), style:"animation-delay:" + Math.min(i,10)*0.05 + "s", onclick:()=>openMsg(m)},
       h("div",{class:"ic"}, m.is_read ? "✉️" : "💌"),
-      h("div",{class:"t"}, h("div",{}, m.is_read ? m.body : "Nuevo mensaje anónimo"), h("small",{}, timeAgo(m.created_at)))));
-  }
+      h("div",{class:"t"}, h("div",{}, m.is_read ? m.body : "Nuevo mensaje anónimo — tócalo para abrir"), h("small",{}, timeAgo(m.created_at)))));
+  });
   return card;
 }
 
@@ -337,8 +441,19 @@ function linkCard(){
   const link = myLink();
   const copyBtn = h("button",{class:"btn-dark btn-sm"}, "Copiar");
   copyBtn.addEventListener("click", () => copyText(link, copyBtn));
+  const bigCopy = h("button",{class:"btn pulse"}, "📋 Copiar mi link");
+  bigCopy.addEventListener("click", async () => {
+    try{ await navigator.clipboard.writeText(link); bigCopy.textContent = "¡Copiado! Pégalo en tu historia 🎉"; confetti(); }
+    catch(e){ bigCopy.textContent = "Cópialo de la caja de abajo"; }
+    setTimeout(() => { bigCopy.textContent = "📋 Copiar mi link"; }, 2500);
+  });
   return h("div",{},
-    h("div",{class:"card"}, h("h2",{}, "Tu link personal"),
+    h("div",{class:"card"},
+      h("div",{class:"story-mini"},
+        h("div",{class:"q"}, h("small",{}, "@" + S.profile.username), "envíame mensajes anónimos 🤫"),
+        h("div",{style:"font-size:13px;opacity:.9"}, "👆 Así se verá en tu historia")),
+      bigCopy,
+      h("h2",{style:"margin-top:18px"}, "Tu link personal"),
       h("div",{class:"linkbox"}, h("code",{}, link), copyBtn),
       h("p",{class:"muted", style:"margin-top:12px"}, "Cualquier persona con este link puede mandarte un mensaje anónimo, sin crear cuenta."),
       h("a",{class:"btn btn-ghost", href:link, style:"display:block;text-align:center;text-decoration:none"}, "Ver cómo lo ven tus amigos")),
@@ -444,9 +559,17 @@ async function showSend(username){
 
 function sendForm(prof){
   const ta = h("textarea",{maxlength:String(MAX_LEN), placeholder:"Mándame un mensaje anónimo…"});
+  const dice = h("button",{class:"dice", title:"Pregunta al azar", "aria-label":"Pregunta al azar"}, "🎲");
+  const setText = (t) => { ta.value = t; ta.dispatchEvent(new Event("input")); ta.focus(); };
+  dice.addEventListener("click", () => {
+    dice.classList.remove("roll"); void dice.offsetWidth; dice.classList.add("roll");
+    let p; do { p = PROMPTS[Math.floor(Math.random()*PROMPTS.length)]; } while (p === ta.value && PROMPTS.length > 1);
+    setText(p);
+  });
+  const chips = h("div",{class:"chips"}, CHIPS.map(c => h("button",{class:"chip", onclick:()=>setText(c + " ")}, c)));
   const counter = h("div",{class:"counter"}, "0/" + MAX_LEN);
   const err = h("div",{class:"err"});
-  const btn = h("button",{class:"btn btn-dark", disabled:true}, "Enviar 🤫");
+  const btn = h("button",{class:"btn pulse", disabled:true}, "Enviar 🤫");
   ta.addEventListener("input", () => { counter.textContent = ta.value.length + "/" + MAX_LEN; btn.disabled = ta.value.trim().length < 2; err.textContent = ""; });
   btn.addEventListener("click", async () => {
     const text = ta.value.trim();
@@ -459,8 +582,9 @@ function sendForm(prof){
     const { error } = await S.sb.from("messages").insert({ recipient: prof.id, body: text });
     if (error){ err.textContent = "No se pudo enviar. Intenta de nuevo en un momento."; btn.disabled = false; btn.textContent = "Enviar 🤫"; return; }
     list.push(Date.now()); lsSet("psst_sent", list);
+    confetti();
     render(h("div",{class:"card center"},
-      h("div",{style:"font-size:56px"}, "✅"), h("h1",{}, "¡Enviado!"),
+      h("div",{class:"big-emoji"}, "🎉"), h("h1",{}, "¡Enviado!"),
       h("p",{class:"muted"}, "Tu mensaje llegó a @" + prof.username + " de forma anónima."),
       h("button",{class:"btn btn-ghost", onclick:()=>render(sendForm(prof))}, "Enviar otro mensaje"),
       h("a",{class:"btn", href:baseUrl(), style:"display:block;text-align:center;text-decoration:none"}, "¡Quiero mis propios mensajes!")));
@@ -468,7 +592,7 @@ function sendForm(prof){
   return h("div",{class:"card"},
     h("div",{class:"ask-head"}, h("div",{class:"avatar"}, prof.username[0].toUpperCase()),
       h("div",{}, h("b",{}, "@" + prof.username), h("span",{}, "envíame mensajes anónimos"))),
-    ta, counter, btn, err,
+    h("div",{class:"send-area"}, ta, dice), counter, chips, btn, err,
     h("p",{class:"muted center", style:"margin-top:14px"}, "🔒 Anónimo: @" + prof.username + " no verá quién eres."));
 }
 
