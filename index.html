@@ -102,6 +102,7 @@
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-ghost{background:#f3effa;color:var(--p1)}
   .btn-dark{background:var(--ink);color:#fff}
+  .btn-wa{background:#25D366;color:#fff;box-shadow:0 10px 24px rgba(37,211,102,.35)}
   .btn-sm{padding:9px 14px;font-size:14px}
   .row{display:flex;gap:8px;align-items:center}
   .row > *{flex:1}
@@ -546,13 +547,14 @@ function linkCard(){
         h("div",{class:"q"}, h("small",{}, "@" + S.profile.username), "envíame mensajes anónimos 🤫"),
         h("div",{style:"font-size:13px;opacity:.9"}, "👆 Así se verá en tu historia")),
       bigCopy,
+      h("a",{class:"btn btn-wa", href:"https://wa.me/?text=" + encodeURIComponent("Envíame un mensaje anónimo 🤫 " + link), target:"_blank", rel:"noopener", onclick:()=>vibrate("LIGHT")}, "💬 Compartir en WhatsApp"),
       h("h2",{style:"margin-top:18px"}, "Tu link personal"),
       h("div",{class:"linkbox"}, h("code",{}, link), copyBtn),
       h("p",{class:"muted", style:"margin-top:12px"}, "Cualquier persona con este link puede mandarte un mensaje anónimo, sin crear cuenta."),
       h("a",{class:"btn btn-ghost", href:link, style:"display:block;text-align:center;text-decoration:none"}, "Ver cómo lo ven tus amigos")),
     h("div",{class:"card"}, h("h2",{}, "Cómo conseguir más mensajes"),
       h("div",{class:"tip"}, "1️⃣", h("span",{}, h("b",{}, "Copia tu link"), " con el botón de arriba.")),
-      h("div",{class:"tip"}, "2️⃣", h("span",{}, h("b",{}, "Sube una historia"), " a Instagram o TikTok con el sticker de “Enlace”.")),
+      h("div",{class:"tip"}, "2️⃣", h("span",{}, h("b",{}, "Sube una historia"), " a Instagram o TikTok con el sticker de “Enlace”, o ponlo en tu Estado de WhatsApp.")),
       h("div",{class:"tip"}, "3️⃣", h("span",{}, h("b",{}, "Responde"), " y comparte tus respuestas como imagen.")))
   );
 }
